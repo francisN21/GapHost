@@ -6,6 +6,7 @@ const colors = require("colors");
 const clear = require("clear");
 const figlet = require("figlet");
 const { exit } = require("process");
+const { start } = require("repl");
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -61,19 +62,19 @@ const startMenu = () => {
           empMan();
           break;
         case "Add Employee":
-          empMan();
+          addEmployee();
           break;
         case "Remove Employee":
-          empMan();
+          removeEmployee();
           break;
         case "Update Employee Role":
-          empMan();
+          updateEmpRole();
           break;
         case "Update Employee Manager":
-          empMan();
+          updateEmpManager();
           break;
         case "View All Roles":
-          empMan();
+          viewAllRoles();
           break;
         case "Exit":
           terminate();
@@ -93,6 +94,58 @@ const empDept = () => {
 const empMan = () => {
   console.log("viewed Emp");
 };
+
+const addEmployee = () => {
+  inquirer
+    .prompt([
+      {
+        name: "addName",
+        type: "input",
+        message: "What is the employee's first name?",
+      },
+      {
+        name: "addLast",
+        type: "input",
+        message: "What is the employee's last name?",
+      },
+      {
+        name: "addRoleID",
+        type: "input",
+        message: "What is the employee's role id?",
+      },
+      {
+        name: "addManagerID",
+        type: "input",
+        message: "What is the manager's role id?",
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "INSERT INTO employee SET ?",
+        {
+          first_name: answer.addName,
+          last_name: answer.addLast,
+          role_id: answer.addRoleID,
+          manager_id: answer.addManagerID,
+        },
+        (err, res) => {
+          if (err) throw err;
+          console.log(
+            `${answer.addName} ${answer.addLast} added to employees \n`
+          );
+          startMenu();
+        }
+      );
+    });
+};
+
+const removeEmployee = () => {};
+
+const updateEmpRole = () => {};
+
+const updateEmpManager = () => {};
+
+const viewAllRoles = () => {};
 
 const terminate = () => {
   connection.end();
