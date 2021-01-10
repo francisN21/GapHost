@@ -18,64 +18,83 @@ const connection = mysql.createConnection({
 // connect and start the app
 connection.connect((err) => {
   if (err) throw err;
-  startMenu()
+  startMenu();
 });
 // wonderful ascii text generator from https://www.kammerl.de/ascii/AsciiSignature.php using figlet front end
 const asciWelcome = () => {
   clear();
-  console.log("|``````````````````````````````````````````````````````````````````````|".brightGreen);
-  console.log("|   >===>                         >=>    >=>                      >=>  |".brightGreen);
-  console.log("| >>    >=>                       >=>    >=>                      >=>  |".brightGreen);
-  console.log("|>=>            >=> >=>  >=> >=>  >=>    >=>    >=>      >===>  >=>>==>|".brightGreen);
-  console.log("|>=>          >=>   >=>  >>   >=> >=====>>=>  >=>  >=>  >=>       >=>  |".brightGreen);
-  console.log("|>=>   >===> >=>    >=>  >>   >=> >=>    >=> >=>    >=>   >==>    >=>  |".brightGreen);
-  console.log("| >=>    >>   >=>   >=>  >=> >=>  >=>    >=>  >=>  >=>      >=>   >=>  |".brightGreen);
-  console.log("|  >====>      >==>>==>  >=>      >=>    >=>    >=>     >=>>>=>   >=>  |".brightGreen);
-  console.log("|                        >=>                                           |".brightGreen);
-  console.log("|``````````````````````````````````````````````````````````````````````|".brightGreen);
-  console.log("|Welcome to Francisco's Employee Tracker                               |".brightGreen)
+  console.log(
+    "|Welcome to Francisco's Employee Tracker                               |"
+      .brightGreen
+  );
 };
 asciWelcome();
-
+// to start the application
 const startMenu = () => {
-  inquirer.prompt({
-      name: 'action',
-      type: 'list',
-      message: 'Please choose an action below:',
-      choices: ['View All Employees','View All Employees by Department', 'View All Employees by Manager', 'Add Employee', 'Remove Employee', 'Update Employee Role', 'Update Employee Manager', 'View All Roles', 'Exit']
-  })
-  .then((answer) =>{
-    switch(answer.action) {
-        case 'View All Employees':
+  inquirer
+    .prompt({
+      name: "action",
+      type: "rawlist",
+      message: "Please choose an action below:",
+      choices: [
+        "View All Employees",
+        "View All Employees by Department",
+        "View All Employees by Manager",
+        "Add Employee",
+        "Remove Employee",
+        "Update Employee Role",
+        "Update Employee Manager",
+        "View All Roles",
+        "Exit",
+      ],
+    })
+    .then((answer) => {
+      // switch statement for all the questions
+      switch (answer.action) {
+        case "View All Employees":
           viewEmployees();
           break;
-        case 'View All Employees by Department':
+        case "View All Employees by Department":
           empDept();
           break;
-        case 'View All Employees by Manager':
+        case "View All Employees by Manager":
           empMan();
           break;
-        case 'Exit':
+        case "Add Employee":
+          empMan();
+          break;
+        case "Remove Employee":
+          empMan();
+          break;
+        case "Update Employee Role":
+          empMan();
+          break;
+        case "Update Employee Manager":
+          empMan();
+          break;
+        case "View All Roles":
+          empMan();
+          break;
+        case "Exit":
           terminate();
           break;
         default:
       }
-
-  })
-}
-
-const viewEmployees = () =>{
-  console.log("viewed Emp")
-}
+    });
+};
+// funtions to satisfy the question/switch statements
+const viewEmployees = () => {
+  console.log("viewed Emp");
+};
 const empDept = () => {
-    console.log("viewed Emp")
+  console.log("viewed Emp");
 };
 
-const empMan = () =>{
-    console.log("viewed Emp")
+const empMan = () => {
+  console.log("viewed Emp");
 };
 
-const terminate = () =>{
-    connection.end();
-    process.exit(0);
+const terminate = () => {
+  connection.end();
+  process.exit(0);
 };
