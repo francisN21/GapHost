@@ -17,21 +17,29 @@ const connection = mysql.createConnection({
 // connect and start the app
 connection.connect((err) => {
   if (err) throw err;
-  // updateArrays make sures that all choices are available every time it goes to the start menu
-  updateArrays();
+
   startMenu();
 });
 // wonderful ascii text generator from https://www.kammerl.de/ascii/AsciiSignature.php using figlet front end
 const asciWelcome = () => {
   clear();
-  console.log(
-    "|Welcome to Francisco's Employee Tracker                               |"
-      .brightGreen
-  );
+  console.log("|``````````````````````````````````````````````````````````````````````|".brightGreen);
+  console.log("|   >===>                         >=>    >=>                      >=>  |".brightGreen);
+  console.log("| >>    >=>                       >=>    >=>                      >=>  |".brightGreen);
+  console.log("|>=>            >=> >=>  >=> >=>  >=>    >=>    >=>      >===>  >=>>==>|".brightGreen);
+  console.log("|>=>          >=>   >=>  >>   >=> >=====>>=>  >=>  >=>  >=>       >=>  |".brightGreen);
+  console.log("|>=>   >===> >=>    >=>  >>   >=> >=>    >=> >=>    >=>   >==>    >=>  |".brightGreen);
+  console.log("| >=>    >>   >=>   >=>  >=> >=>  >=>    >=>  >=>  >=>      >=>   >=>  |".brightGreen);
+  console.log("|  >====>      >==>>==>  >=>      >=>    >=>    >=>     >=>>>=>   >=>  |".brightGreen);
+  console.log("|                        >=>                                           |".brightGreen);
+  console.log("|``````````````````````````````````````````````````````````````````````|".brightGreen);
+  console.log("|Welcome to Francisco's Employee Tracker                               |".brightGreen);
 };
 asciWelcome();
 // to start the application
 const startMenu = () => {
+  // updateArrays make sures that all choices are available every time it goes to the start menu
+  updateArrays();
   inquirer
     .prompt({
       name: "action",
@@ -39,6 +47,7 @@ const startMenu = () => {
       message: "Please choose an action below:",
       choices: [
         "View All Employees",
+        "View All Managers",
         "View All Employees by Department",
         "View All Employees by Manager",
         "Add Employee",
@@ -54,6 +63,9 @@ const startMenu = () => {
       switch (answer.action) {
         case "View All Employees":
           viewEmployees();
+          break;
+        case "View All Managers":
+          viewManagers();
           break;
         case "View All Employees by Department":
           empDept();
@@ -94,6 +106,16 @@ const viewEmployees = () => {
     startMenu();
   });
 };
+const viewManagers = () => {
+  connection.query("SELECT * FROM manager INNER JOIN department ON manager.department_id = department.id", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    tempDel1 = [];
+    tempRole = [];
+    tempManager = [];
+    startMenu();
+  });
+};
 const empDept = () => {
   connection.query(
     "SELECT employee.first_name AS Employee, department.name AS Department FROM employee INNER JOIN department ON department.id = employee.role_id;",
@@ -102,6 +124,7 @@ const empDept = () => {
       console.table(res);
       tempDel1 = [];
       tempRole = [];
+      tempManager = [];
       startMenu();
     }
   );
@@ -148,14 +171,15 @@ const addEmployee = () => {
       },
     ])
     .then((answer) => {
-      let roleId = tempRole.indexOf(answer.updateRole) + 1;
+      let roleId = tempRole.indexOf(answer.addRoleID) + 1;
+      let manId = tempManager.indexOf(answer.addManagerID) + 1;
       connection.query(
         "INSERT INTO employee SET ?",
         {
           first_name: answer.addName,
           last_name: answer.addLast,
           role_id: roleId,
-          manager_id: answer.addManagerID,
+          manager_id: manId,
         },
         (err, res) => {
           if (err) throw err;
@@ -187,7 +211,7 @@ const removeEmployee = () => {
         [{ first_name: answer.deleteName }],
         (err, res) => {
           if (err) throw err;
-          console.log(answer);
+          console.log("Success!");
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -220,7 +244,7 @@ const updateEmpRole = () => {
         [{ role_id: roleId }, { first_name: answer.updateRoleName }],
         (err, res) => {
           if (err) throw err;
-          console.log(answer);
+          console.log("Success!");
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -247,13 +271,13 @@ const updateEmpManager = () => {
       },
     ])
     .then((answer) => {
-      let managerId = tempRole.indexOf(answer.updateManager) + 1;
+      let managerId = tempManager.indexOf(answer.updateManager) + 1;
       connection.query(
         "UPDATE employee SET ? WHERE ?",
         [{ manager_id: managerId }, { first_name: answer.updateName }],
         (err, res) => {
           if (err) throw err;
-          console.log(answer);
+          console.log("Success!");
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -288,6 +312,7 @@ const terminate = () => {
 const updateArrays = () => {
   fetchEmployee();
   fetchRole();
+  fetchManager();
 };
 let tempDel1 = [];
 const fetchEmployee = () => {
@@ -302,12 +327,12 @@ const fetchEmployee = () => {
   });
   return tempDel1;
 };
-
+// fetches roles
 let tempRole = [];
-const fetchRole = async () => {
-  connection.query("SELECT * FROM role", (err, res) => {
+const fetchRole = () => {
+  connection.query("SELECT * FROM role", (err, results) => {
     if (err) throw err;
-    let data = JSON.parse(JSON.stringify(res));
+    let data = JSON.parse(JSON.stringify(results));
     // tempDel.push(data);
     for (i = 0; i < data.length; i++) {
       tempRole.push(data[i].title);
@@ -315,15 +340,15 @@ const fetchRole = async () => {
   });
   return tempRole;
 };
-
+// fetches managers
 let tempManager = [];
-const fetchRole = async () => {
-  connection.query("SELECT * FROM manager", (err, res) => {
+const fetchManager = () => {
+  connection.query("SELECT * FROM manager", (err, results1) => {
     if (err) throw err;
-    let data = JSON.parse(JSON.stringify(res));
+    let data = JSON.parse(JSON.stringify(results1));
     // tempDel.push(data);
     for (i = 0; i < data.length; i++) {
-      tempRole.push(data[i].title);
+      tempManager.push(data[i].first_name);
     }
   });
   return tempManager;
