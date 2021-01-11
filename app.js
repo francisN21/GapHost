@@ -5,8 +5,9 @@ const consoleTable = require("console.table");
 const colors = require("colors");
 const clear = require("clear");
 const figlet = require("figlet");
-const { exit } = require("process");
-const { start } = require("repl");
+
+let tempDel1 = [];
+let tempRole = [];
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -32,6 +33,7 @@ const asciWelcome = () => {
 asciWelcome();
 // to start the application
 const startMenu = () => {
+  dofetchEmployee();
   inquirer
     .prompt({
       name: "action",
@@ -85,14 +87,35 @@ const startMenu = () => {
 };
 // funtions to satisfy the question/switch statements
 const viewEmployees = () => {
-  console.log("viewed Emp");
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    tempDel1 = [];
+    tempRole = [];
+    startMenu();
+  });
 };
 const empDept = () => {
-  console.log("viewed Emp");
+  connection.query("SELECT * FROM department", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    tempDel1 = [];
+    tempRole = [];
+    startMenu();
+  });
 };
 
 const empMan = () => {
-  console.log("viewed Emp");
+  connection.query(
+    "SELECT e.first_name AS Employee, m.first_name AS Manager FROM employee e INNER JOIN employee m ON m.id=e.manager_id ORDER BY e.id",
+    (err, res) => {
+      if (err) throw err;
+      console.table(res);
+      tempDel1 = [];
+      tempRole = [];
+      startMenu();
+    }
+  );
 };
 
 const addEmployee = () => {
@@ -133,21 +156,134 @@ const addEmployee = () => {
           console.log(
             `${answer.addName} ${answer.addLast} added to employees \n`
           );
+          tempDel1 = [];
+          tempRole = [];
           startMenu();
         }
       );
     });
 };
 
-const removeEmployee = () => {};
+const removeEmployee = () => {
+  askDelEmployee();
+};
 
-const updateEmpRole = () => {};
+const updateEmpRole = () => {
+  inquirer
+    .prompt([
+      {
+        name: "updateRoleName",
+        type: "list",
+        message: "Who do you want to update Role?",
+        choices: tempDel1,
+      },
+      {
+        name: "updateRole",
+        type: "list",
+        message: "Who do you want to update Role?",
+        choices: tempRole,
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "UPDATE employee SET ? WHERE ?",
+        [{ role_id: answer.updateRole }, { first_name: answer.updateRoleName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log(answer);
+          tempDel1 = [];
+          tempRole = [];
+          startMenu();
+        }
+      );
+    });
+};
 
-const updateEmpManager = () => {};
+const updateEmpManager = () => {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    startMenu();
+  });
+};
 
-const viewAllRoles = () => {};
+const viewAllRoles = () => {
+  connection.query(
+    "SELECT * FROM role INNER JOIN department ON role.id=department.id",
+    (err, res) => {
+      if (err) throw err;
+      console.table(res);
+      tempDel1 = [];
+      tempRole = [];
+      startMenu();
+    }
+  );
+};
 
 const terminate = () => {
   connection.end();
   process.exit(0);
 };
+
+function askDelEmployee() {
+  inquirer
+    .prompt([
+      {
+        name: "deleteName",
+        type: "list",
+        message: "Who do you want to delete?",
+        choices: tempDel1,
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "DELETE FROM employee WHERE ?",
+        [{ first_name: answer.deleteName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log(answer);
+          tempDel1 = [];
+          tempRole = [];
+          startMenu();
+        }
+      );
+    });
+}
+async function dofetchEmployee() {
+  try {
+    await fetchEmployee();
+    fetchRole();
+  } catch (err) {
+    console.log(err);
+  }
+}
+async function fetchEmployee() {
+  try {
+    connection.query("SELECT first_name FROM employee", (err, res) => {
+      if (err) throw err;
+      let data = JSON.parse(JSON.stringify(res));
+      // tempDel.push(data);
+      for (i = 0; i < data.length; i++) {
+        tempDel1.push(data[i].first_name);
+      }
+      console.log(tempDel1);
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
+async function fetchRole() {
+  try {
+    connection.query("SELECT * FROM role", (err, res) => {
+      if (err) throw err;
+      let data = JSON.parse(JSON.stringify(res));
+      // tempDel.push(data);
+      for (i = 0; i < data.length; i++) {
+        tempRole.push(data[i].id);
+      }
+      console.log(tempRole);
+    });
+  } catch (err) {
+    console.log(err);
+  }
+}
