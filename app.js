@@ -6,9 +6,6 @@ const colors = require("colors");
 const clear = require("clear");
 const figlet = require("figlet");
 
-let tempDel1 = [];
-let tempRole = [];
-
 const connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
@@ -20,6 +17,7 @@ const connection = mysql.createConnection({
 // connect and start the app
 connection.connect((err) => {
   if (err) throw err;
+  updateArrays();
   startMenu();
 });
 // wonderful ascii text generator from https://www.kammerl.de/ascii/AsciiSignature.php using figlet front end
@@ -33,7 +31,6 @@ const asciWelcome = () => {
 asciWelcome();
 // to start the application
 const startMenu = () => {
-  dofetchEmployee();
   inquirer
     .prompt({
       name: "action",
@@ -165,67 +162,6 @@ const addEmployee = () => {
 };
 
 const removeEmployee = () => {
-  askDelEmployee();
-};
-
-const updateEmpRole = () => {
-  inquirer
-    .prompt([
-      {
-        name: "updateRoleName",
-        type: "list",
-        message: "Who do you want to update Role?",
-        choices: tempDel1,
-      },
-      {
-        name: "updateRole",
-        type: "list",
-        message: "Who do you want to update Role?",
-        choices: tempRole,
-      },
-    ])
-    .then((answer) => {
-      connection.query(
-        "UPDATE employee SET ? WHERE ?",
-        [{ role_id: answer.updateRole }, { first_name: answer.updateRoleName }],
-        (err, res) => {
-          if (err) throw err;
-          console.log(answer);
-          tempDel1 = [];
-          tempRole = [];
-          startMenu();
-        }
-      );
-    });
-};
-
-const updateEmpManager = () => {
-  connection.query("SELECT * FROM employee", (err, res) => {
-    if (err) throw err;
-    console.table(res);
-    startMenu();
-  });
-};
-
-const viewAllRoles = () => {
-  connection.query(
-    "SELECT * FROM role INNER JOIN department ON role.id=department.id",
-    (err, res) => {
-      if (err) throw err;
-      console.table(res);
-      tempDel1 = [];
-      tempRole = [];
-      startMenu();
-    }
-  );
-};
-
-const terminate = () => {
-  connection.end();
-  process.exit(0);
-};
-
-function askDelEmployee() {
   inquirer
     .prompt([
       {
@@ -248,42 +184,96 @@ function askDelEmployee() {
         }
       );
     });
-}
-async function dofetchEmployee() {
-  try {
-    await fetchEmployee();
-    fetchRole();
-  } catch (err) {
-    console.log(err);
-  }
-}
-async function fetchEmployee() {
-  try {
-    connection.query("SELECT first_name FROM employee", (err, res) => {
-      if (err) throw err;
-      let data = JSON.parse(JSON.stringify(res));
-      // tempDel.push(data);
-      for (i = 0; i < data.length; i++) {
-        tempDel1.push(data[i].first_name);
-      }
-      console.log(tempDel1);
+};
+// to Update employee Role, indexOf works as the role ID to be set on the query
+const updateEmpRole = () => {
+  inquirer
+    .prompt([
+      {
+        name: "updateRoleName",
+        type: "list",
+        message: "Who do you want to update Role?",
+        choices: tempDel1,
+      },
+      {
+        name: "updateRole",
+        type: "list",
+        message: "Who do you want to update Role?",
+        choices: tempRole,
+      },
+    ])
+    .then((answer) => {
+      let roleId = tempRole.indexOf(answer.updateRole) + 1;
+      connection.query(
+        "UPDATE employee SET ? WHERE ?",
+        [{ role_id: roleId }, { first_name: answer.updateRoleName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log(answer);
+          tempDel1 = [];
+          tempRole = [];
+          startMenu();
+        }
+      );
     });
-  } catch (err) {
-    console.log(err);
-  }
-}
-async function fetchRole() {
-  try {
-    connection.query("SELECT * FROM role", (err, res) => {
+};
+
+const updateEmpManager = () => {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    startMenu();
+  });
+};
+
+// to view all roles
+const viewAllRoles = () => {
+  connection.query(
+    "SELECT * FROM role INNER JOIN department ON role.id=department.id",
+    (err, res) => {
       if (err) throw err;
-      let data = JSON.parse(JSON.stringify(res));
-      // tempDel.push(data);
-      for (i = 0; i < data.length; i++) {
-        tempRole.push(data[i].id);
-      }
-      console.log(tempRole);
-    });
-  } catch (err) {
-    console.log(err);
-  }
-}
+      console.table(res);
+      tempDel1 = [];
+      tempRole = [];
+      startMenu();
+    }
+  );
+};
+
+// terminates the application
+const terminate = () => {
+  connection.end();
+  process.exit(0);
+};
+
+// refreshes choices for questions
+const updateArrays = () => {
+  fetchEmployee();
+  fetchRole();
+};
+let tempDel1 = [];
+const fetchEmployee = () => {
+  connection.query("SELECT first_name FROM employee", (err, res) => {
+    if (err) throw err;
+    let data = JSON.parse(JSON.stringify(res));
+    // tempDel.push(data);
+    for (i = 0; i < data.length; i++) {
+      tempDel1.push(data[i].first_name);
+    }
+    // console.log(tempDel1);
+  });
+  return tempDel1;
+};
+
+let tempRole = [];
+const fetchRole = async () => {
+  connection.query("SELECT * FROM role", (err, res) => {
+    if (err) throw err;
+    let data = JSON.parse(JSON.stringify(res));
+    // tempDel.push(data);
+    for (i = 0; i < data.length; i++) {
+      tempRole.push(data[i].title);
+    }
+  });
+  return tempRole;
+};
