@@ -17,6 +17,7 @@ const connection = mysql.createConnection({
 // connect and start the app
 connection.connect((err) => {
   if (err) throw err;
+  // updateArrays make sures that all choices are available every time it goes to the start menu
   updateArrays();
   startMenu();
 });
@@ -89,27 +90,32 @@ const viewEmployees = () => {
     console.table(res);
     tempDel1 = [];
     tempRole = [];
+    tempManager = [];
     startMenu();
   });
 };
 const empDept = () => {
-  connection.query("SELECT * FROM department", (err, res) => {
-    if (err) throw err;
-    console.table(res);
-    tempDel1 = [];
-    tempRole = [];
-    startMenu();
-  });
-};
-
-const empMan = () => {
   connection.query(
-    "SELECT e.first_name AS Employee, m.first_name AS Manager FROM employee e INNER JOIN employee m ON m.id=e.manager_id ORDER BY e.id",
+    "SELECT employee.first_name AS Employee, department.name AS Department FROM employee INNER JOIN department ON department.id = employee.role_id;",
     (err, res) => {
       if (err) throw err;
       console.table(res);
       tempDel1 = [];
       tempRole = [];
+      startMenu();
+    }
+  );
+};
+
+const empMan = () => {
+  connection.query(
+    "SELECT employee.first_name AS Employee, manager.first_name AS Manager FROM employee INNER JOIN manager ON manager.id = employee.role_id",
+    (err, res) => {
+      if (err) throw err;
+      console.table(res);
+      tempDel1 = [];
+      tempRole = [];
+      tempManager = [];
       startMenu();
     }
   );
@@ -130,22 +136,25 @@ const addEmployee = () => {
       },
       {
         name: "addRoleID",
-        type: "input",
-        message: "What is the employee's role id?",
+        type: "list",
+        message: "What is the employee's role?",
+        choices: tempRole,
       },
       {
         name: "addManagerID",
-        type: "input",
-        message: "What is the manager's role id?",
+        type: "list",
+        message: "What is the employee's manager?",
+        choices: tempManager,
       },
     ])
     .then((answer) => {
+      let roleId = tempRole.indexOf(answer.updateRole) + 1;
       connection.query(
         "INSERT INTO employee SET ?",
         {
           first_name: answer.addName,
           last_name: answer.addLast,
-          role_id: answer.addRoleID,
+          role_id: roleId,
           manager_id: answer.addManagerID,
         },
         (err, res) => {
@@ -155,6 +164,7 @@ const addEmployee = () => {
           );
           tempDel1 = [];
           tempRole = [];
+          tempManager = [];
           startMenu();
         }
       );
@@ -180,6 +190,7 @@ const removeEmployee = () => {
           console.log(answer);
           tempDel1 = [];
           tempRole = [];
+          tempManager = [];
           startMenu();
         }
       );
@@ -212,6 +223,7 @@ const updateEmpRole = () => {
           console.log(answer);
           tempDel1 = [];
           tempRole = [];
+          tempManager = [];
           startMenu();
         }
       );
@@ -219,11 +231,36 @@ const updateEmpRole = () => {
 };
 
 const updateEmpManager = () => {
-  connection.query("SELECT * FROM employee", (err, res) => {
-    if (err) throw err;
-    console.table(res);
-    startMenu();
-  });
+  inquirer
+    .prompt([
+      {
+        name: "updateName",
+        type: "list",
+        message: "Who do you want to update Role?",
+        choices: tempDel1,
+      },
+      {
+        name: "updateManager",
+        type: "list",
+        message: "Who is their manager?",
+        choices: tempManager,
+      },
+    ])
+    .then((answer) => {
+      let managerId = tempRole.indexOf(answer.updateManager) + 1;
+      connection.query(
+        "UPDATE employee SET ? WHERE ?",
+        [{ manager_id: managerId }, { first_name: answer.updateName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log(answer);
+          tempDel1 = [];
+          tempRole = [];
+          tempManager = [];
+          startMenu();
+        }
+      );
+    });
 };
 
 // to view all roles
@@ -235,6 +272,7 @@ const viewAllRoles = () => {
       console.table(res);
       tempDel1 = [];
       tempRole = [];
+      tempManager = [];
       startMenu();
     }
   );
@@ -276,4 +314,17 @@ const fetchRole = async () => {
     }
   });
   return tempRole;
+};
+
+let tempManager = [];
+const fetchRole = async () => {
+  connection.query("SELECT * FROM manager", (err, res) => {
+    if (err) throw err;
+    let data = JSON.parse(JSON.stringify(res));
+    // tempDel.push(data);
+    for (i = 0; i < data.length; i++) {
+      tempRole.push(data[i].title);
+    }
+  });
+  return tempManager;
 };
