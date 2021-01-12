@@ -48,8 +48,7 @@ const startMenu = () => {
       choices: [
         "View All Employees",
         "View All Managers",
-        "View All Employees by Department",
-        "View All Employees by Manager",
+
         "Add Employee",
         "Remove Employee",
         "Update Employee Role",
@@ -62,20 +61,13 @@ const startMenu = () => {
       // switch statement for all the questions
       switch (answer.action) {
         case "View All Employees":
-          viewEmployees();
+          
           break;
         case "View All Managers":
-          viewManagers();
+          
           break;
-        case "View All Employees by Department":
-          empDept();
-          break;
-        case "View All Employees by Manager":
-          empMan();
-          break;
-        case "Add Employee":
-          addEmployee();
-          break;
+
+
         case "Remove Employee":
           removeEmployee();
           break;
@@ -86,7 +78,7 @@ const startMenu = () => {
           updateEmpManager();
           break;
         case "View All Roles":
-          viewAllRoles();
+          
           break;
         case "Exit":
           terminate();
@@ -109,10 +101,10 @@ const newStart = () => {
         add();
         break;
       case "View":
-
+        view()
         break;
       case "Update":
-
+        update();
         break;
       case "Delete":
 
@@ -151,7 +143,60 @@ const add = () =>{inquirer.prompt({
   }
   });
 }
+const view = () =>{inquirer.prompt({
+  name: 'action',
+  type: 'list',
+  message: 'What do you want to view?',
+  choices: ["Employee", "Manager", "Role", "Department", "View All Employees by Department", "View All Employees by Manager", "Exit"]
+}).then((answer)=>{
+  switch (answer.action) {
+    case "Employee":
+      viewEmployees();
+      break;
+    case "Manager":
+      viewManagers();
+      break;
+    case "Role":
+      viewAllRoles();
+      break;
+    case "Department":
+      viewDepartment()
+      break;
+    case "View All Employees by Department":
+      empDept();
+      break;
+    case "View All Employees by Manager":
+      empMan();
+      break;
+    case "Exit":
+      terminate();
+      break;
+    default:
+  }
+  });
+}
 
+const update = () =>{inquirer.prompt({
+  name: 'action',
+  type: 'list',
+  message: 'What do you want to update?',
+  choices: ["Employee Role", "Manager Department", "Exit"]
+}).then((answer)=>{
+  switch (answer.action) {
+    case "Employee Role":
+      updateEmployee();
+      break;
+    case "Manager Department":
+      updateManager();
+      break;
+    case "Exit":
+      terminate();
+      break;
+    default:
+  }
+  });
+
+};
 
 // ============================= VIEW SECTION ==========================//
 const viewAllRoles = () => {
@@ -168,9 +213,22 @@ const viewAllRoles = () => {
     }
   );
 };
-
+const viewDepartment = () => {
+  connection.query(
+    "SELECT * FROM department INNER JOIN role ON role.department_id = department.id",
+    (err, res) => {
+      if (err) throw err;
+      console.table(res);
+      tempDel1 = [];
+      tempRole = [];
+      tempManager = [];
+      tempDepartment = [];
+      newStart();
+    }
+  );
+};
 const viewEmployees = () => {
-  connection.query("SELECT * FROM employee", (err, res) => {
+  connection.query("SELECT * FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id", (err, res) => {
     if (err) throw err;
     console.table(res);
     tempDel1 = [];
@@ -335,7 +393,6 @@ const addRole = () => {
         message: "This role falls under what department?",
         choices: tempDepartment,
       },
-
     ])
     .then((answer) => {
       let deptID = tempDepartment.indexOf(answer.departmentID) + 1;
@@ -417,7 +474,7 @@ const removeEmployee = () => {
     });
 };
 // ============================= UPDATE SECTION ==========================//
-const updateEmpRole = () => {
+const updateEmployee = () => {
   inquirer
     .prompt([
       {
@@ -429,7 +486,7 @@ const updateEmpRole = () => {
       {
         name: "updateRole",
         type: "list",
-        message: "Who do you want to update Role?",
+        message: `What is the new role of ${answer.updateRoleName}?`,
         choices: tempRole,
       },
     ])
@@ -440,7 +497,7 @@ const updateEmpRole = () => {
         [{ role_id: roleId }, { first_name: answer.updateRoleName }],
         (err, res) => {
           if (err) throw err;
-          console.log("Success!");
+          console.log(`Success! ${answer.updateRoleName} is now working as ${answer.updateRole}!`);
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -451,27 +508,27 @@ const updateEmpRole = () => {
     });
 };
 
-const updateEmpManager = () => {
+const updateManager = () => {
   inquirer
     .prompt([
       {
-        name: "updateName",
+        name: "managerName",
         type: "list",
-        message: "Who do you want to update Role?",
-        choices: tempDel1,
+        message: "Choose the manager name?",
+        choices: tempManager,
       },
       {
         name: "updateManager",
         type: "list",
-        message: "Who is their manager?",
-        choices: tempManager,
+        message: `${action.managerName} will be managing what department?`,
+        choices: tempDepartment,
       },
     ])
     .then((answer) => {
-      let managerId = tempManager.indexOf(answer.updateManager) + 1;
+      let departmentID = tempManager.indexOf(answer.tempDepartment) + 1;
       connection.query(
-        "UPDATE employee SET ? WHERE ?",
-        [{ manager_id: managerId }, { first_name: answer.updateName }],
+        "UPDATE manager SET ? WHERE ?",
+        [{ department_id: departmentID }, { first_name: managerName }],
         (err, res) => {
           if (err) throw err;
           console.log("Success!");
