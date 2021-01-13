@@ -107,7 +107,7 @@ const newStart = () => {
         update();
         break;
       case "Delete":
-
+        erase()
         break;
       case "Exit":
         terminate();
@@ -180,7 +180,7 @@ const update = () =>{inquirer.prompt({
   name: 'action',
   type: 'list',
   message: 'What do you want to update?',
-  choices: ["Employee Role", "Manager Department", "Exit"]
+  choices: ["Employee Role", "Manager Department", "Role Salary", "Exit"]
 }).then((answer)=>{
   switch (answer.action) {
     case "Employee Role":
@@ -188,6 +188,37 @@ const update = () =>{inquirer.prompt({
       break;
     case "Manager Department":
       updateManager();
+      break;
+    case "Role Salary":
+      updateSalary();
+      break;
+    case "Exit":
+      terminate();
+      break;
+    default:
+  }
+  });
+
+};
+
+const erase = () =>{inquirer.prompt({
+  name: 'action',
+  type: 'list',
+  message: 'What do you want to delete?',
+  choices: ["Employee", "Role", "Department", "Manager", "Exit"]
+}).then((answer)=>{
+  switch (answer.action) {
+    case "Employee":
+      deleteEmployee();
+      break;
+    case "Role":
+      deleteRole();
+      break;
+    case "Department":
+      deleteDepartment();
+      break;
+    case "Manager":
+      deleteManager();
       break;
     case "Exit":
       terminate();
@@ -201,7 +232,7 @@ const update = () =>{inquirer.prompt({
 // ============================= VIEW SECTION ==========================//
 const viewAllRoles = () => {
   connection.query(
-    "SELECT * FROM role INNER JOIN department ON role.id=department.id",
+    "SELECT * FROM role INNER JOIN department ON role.department_id = department.id",
     (err, res) => {
       if (err) throw err;
       console.table(res);
@@ -298,23 +329,15 @@ const addEmployee = () => {
         message: "What is the employee's role?",
         choices: tempRole,
       },
-      {
-        name: "addManagerID",
-        type: "list",
-        message: "What is the employee's manager?",
-        choices: tempManager,
-      },
     ])
     .then((answer) => {
       let roleId = tempRole.indexOf(answer.addRoleID) + 1;
-      let manId = tempManager.indexOf(answer.addManagerID) + 1;
       connection.query(
         "INSERT INTO employee SET ?",
         {
           first_name: answer.addName,
           last_name: answer.addLast,
           role_id: roleId,
-          manager_id: manId,
         },
         (err, res) => {
           if (err) throw err;
@@ -362,7 +385,7 @@ const addManager = () => {
         (err, res) => {
           if (err) throw err;
           console.log(
-            `${answer.managerName} ${answer.managerLast} added to employees \n`
+            `${answer.managerName} ${answer.managerLast} added to managers \n`
           );
           tempDel1 = [];
           tempRole = [];
@@ -447,7 +470,7 @@ const addDepartment = () => {
     });
 };
 // ============================= REMOVE SECTION ==========================//
-const removeEmployee = () => {
+const deleteEmployee = () => {
   inquirer
     .prompt([
       {
@@ -460,6 +483,87 @@ const removeEmployee = () => {
     .then((answer) => {
       connection.query(
         "DELETE FROM employee WHERE ?",
+        [{ first_name: answer.deleteName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log("Success!");
+          tempDel1 = [];
+          tempRole = [];
+          tempManager = [];
+          tempDepartment = [];
+          newStart();
+        }
+      );
+    });
+};
+
+const deleteRole = () => {
+  inquirer
+    .prompt([
+      {
+        name: "deleteName",
+        type: "list",
+        message: "Who do you want to delete?",
+        choices: tempRole,
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "DELETE FROM role WHERE ?",
+        [{ title: answer.deleteName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log("Success!");
+          tempDel1 = [];
+          tempRole = [];
+          tempManager = [];
+          tempDepartment = [];
+          newStart();
+        }
+      );
+    });
+};
+
+const deleteDepartment = () => {
+  inquirer
+    .prompt([
+      {
+        name: "deleteName",
+        type: "list",
+        message: "Who do you want to delete?",
+        choices: tempDepartment,
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "DELETE FROM department WHERE ?",
+        [{ name: answer.deleteName }],
+        (err, res) => {
+          if (err) throw err;
+          console.log("Success!");
+          tempDel1 = [];
+          tempRole = [];
+          tempManager = [];
+          tempDepartment = [];
+          newStart();
+        }
+      );
+    });
+};
+
+const deleteManager = () => {
+  inquirer
+    .prompt([
+      {
+        name: "deleteName",
+        type: "list",
+        message: "Who do you want to delete?",
+        choices: tempManager,
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "DELETE FROM manager WHERE ?",
         [{ first_name: answer.deleteName }],
         (err, res) => {
           if (err) throw err;
@@ -486,7 +590,7 @@ const updateEmployee = () => {
       {
         name: "updateRole",
         type: "list",
-        message: `What is the new role of ${answer.updateRoleName}?`,
+        message: `What will be the new role?`,
         choices: tempRole,
       },
     ])
@@ -520,18 +624,50 @@ const updateManager = () => {
       {
         name: "updateManager",
         type: "list",
-        message: `${action.managerName} will be managing what department?`,
+        message: `Will be managing what department?`,
         choices: tempDepartment,
       },
     ])
     .then((answer) => {
-      let departmentID = tempManager.indexOf(answer.tempDepartment) + 1;
+      let departmentID = tempDepartment.indexOf(answer.updateManager) + 1;
       connection.query(
         "UPDATE manager SET ? WHERE ?",
-        [{ department_id: departmentID }, { first_name: managerName }],
+        [{ department_id: departmentID }, { first_name: answer.managerName }],
         (err, res) => {
           if (err) throw err;
-          console.log("Success!");
+          console.log(`Success! ${answer.managerName} is now managing ${answer.updateManager} department!`);
+          tempDel1 = [];
+          tempRole = [];
+          tempManager = [];
+          tempDepartment = [];
+          newStart();
+        }
+      );
+    });
+};
+
+const updateSalary = () => {
+  inquirer
+    .prompt([
+      {
+        name: "role",
+        type: "list",
+        message: "Choose role?",
+        choices: tempRole,
+      },
+      {
+        name: "amount",
+        type: "input",
+        message: `How much do you want to increase salary?`,
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "UPDATE role SET ? WHERE ?",
+        [{ salary: answer.amount }, { title: answer.role } ],
+        (err, res) => {
+          if (err) throw err;
+          console.log(`Success! ${answer.role} is now ${answer.amount}!`);
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
