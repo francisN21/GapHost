@@ -513,7 +513,7 @@ const deleteRole = () => {
         [{ title: answer.deleteName }],
         (err, res) => {
           if (err) throw err;
-          console.log("Success!");
+          console.log(`Success! ${answer.deleteName} has been removed`);
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -540,7 +540,7 @@ const deleteDepartment = () => {
         [{ name: answer.deleteName }],
         (err, res) => {
           if (err) throw err;
-          console.log("Success!");
+          console.log(`Success! ${answer.deleteName} has been removed`);
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -567,7 +567,7 @@ const deleteManager = () => {
         [{ first_name: answer.deleteName }],
         (err, res) => {
           if (err) throw err;
-          console.log("Success!");
+          console.log(`Success! ${answer.deleteName} has been removed`);
           tempDel1 = [];
           tempRole = [];
           tempManager = [];
@@ -677,7 +677,6 @@ const updateSalary = () => {
       );
     });
 };
-
 
 
 // ============================= REQUIRED SET UP SECTION ==========================//
