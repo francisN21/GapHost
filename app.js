@@ -17,7 +17,7 @@ const connection = mysql.createConnection({
 // connect and start the app
 connection.connect((err) => {
   if (err) throw err;
-
+  // starts the app as soon as app.js gets loaded
   newStart();
 });
 // wonderful ascii text generator from https://www.kammerl.de/ascii/AsciiSignature.php using figlet front end
@@ -37,58 +37,10 @@ const asciWelcome = () => {
 };
 asciWelcome();
 // to start the application
-const startMenu = () => {
-  // updateArrays make sures that all choices are available every time it goes to the start menu
-  updateArrays();
-  inquirer
-    .prompt({
-      name: "action",
-      type: "rawlist",
-      message: "Please choose an action below:",
-      choices: [
-        "View All Employees",
-        "View All Managers",
 
-        "Add Employee",
-        "Remove Employee",
-        "Update Employee Role",
-        "Update Employee Manager",
-        "View All Roles",
-        "Exit",
-      ],
-    })
-    .then((answer) => {
-      // switch statement for all the questions
-      switch (answer.action) {
-        case "View All Employees":
-          
-          break;
-        case "View All Managers":
-          
-          break;
-
-
-        case "Remove Employee":
-          removeEmployee();
-          break;
-        case "Update Employee Role":
-          updateEmpRole();
-          break;
-        case "Update Employee Manager":
-          updateEmpManager();
-          break;
-        case "View All Roles":
-          
-          break;
-        case "Exit":
-          terminate();
-          break;
-        default:
-      }
-    });
-};
-
+// ============= STARTS THE APP =================== //
 const newStart = () => {
+  // update arrays here to make sure it loads all needed arrays for the choices //
   updateArrays();
   inquirer.prompt({
     name: 'action',
@@ -116,7 +68,7 @@ const newStart = () => {
     }
   })
 };
-// new switch question
+// ==== contains the functions that satisfies the switch statement above ====//
 const add = () =>{inquirer.prompt({
   name: 'action',
   type: 'list',
@@ -236,6 +188,7 @@ const viewAllRoles = () => {
     (err, res) => {
       if (err) throw err;
       console.table(res);
+      // make sure to empty the array before it calls the newStart() function
       tempDel1 = [];
       tempRole = [];
       tempManager = [];
@@ -331,6 +284,7 @@ const addEmployee = () => {
       },
     ])
     .then((answer) => {
+      // converts the string to integer
       let roleId = tempRole.indexOf(answer.addRoleID) + 1;
       connection.query(
         "INSERT INTO employee SET ?",
