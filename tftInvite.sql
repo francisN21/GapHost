@@ -29,6 +29,8 @@ CREATE TABLE invite (
   user_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
   content VARCHAR(255) NULL,
+  current_contribution INT,
+  goal INT DEFAULT 0,
   address VARCHAR(255) NULL,
   target_date DATE NULL,
   attribute1 VARCHAR(255) NULL,
@@ -37,5 +39,15 @@ CREATE TABLE invite (
   date_created DATE NOT NULL,
   date_updated DATE,
   PRIMARY KEY (invite_id),
-  FOREIGN KEY (`user_id`) REFERENCES Users (`user_id`)
+  FOREIGN KEY (`user_id`) REFERENCES Users (`user_id`),
+  FOREIGN KEY (`current_contribution`) REFERENCES current_contribution (`contribution_money`)
+);
+
+CREATE TABLE current_contribution (
+	contribution_id int NOT NULL AUTO_INCREMENT,
+	invite_id INT NOT NULL,
+    contribution_money INT DEFAULT 0,
+    date_updated DATE,
+    PRIMARY KEY (contribution_id),
+    FOREIGN KEY (`invite_id`) REFERENCES invite (`invite_id`)
 );
